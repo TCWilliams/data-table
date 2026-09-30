@@ -1,7 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { getCellValue } from './getCellValue';
-import { nextSort, sortRows } from './sort';
-import type { Column, DataTableProps, SortState } from './types';
+import type { Column, DataTableProps } from './types';
+import { useSelection } from './useSelection';
+import { useSort } from './useSort';
 
 // Screen readers skip or misread a lone dash, so they get text instead.
 const MISSING_VALUE = (
@@ -16,7 +17,6 @@ const LOADING_STATE = 'Loading…';
 
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const;
 const SORT_ICON = { asc: '↑', desc: '↓' } as const;
-
 
 /**
  * Renders a cell's content: the column's `cell` if given, otherwise `String(value)`.
@@ -39,29 +39,34 @@ export function DataTable<T>({
   emptyState = DEFAULT_EMPTY_STATE,
   defaultSort,
   onSortChange,
+  selectable,
+  getRowLabel,
+  onSelectionChange,
 }: DataTableProps<T>) {
-  const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
-  const sortColumn = columns.find((column) => column.sortable && column.id === sort?.columnId);
-  const activeSort = sortColumn ? sort : null;
-  const direction = activeSort?.direction;
-
-  const rows = useMemo(() => {
-    const unsorted = data ?? [];
-    return sortColumn && direction ? sortRows(unsorted, sortColumn, direction) : unsorted;
-  }, [data, sortColumn, direction]);
-  const columnCount = columns.length;
-
-  function handleSort(columnId: string) {
-    const next = nextSort(activeSort, columnId);
-    setSort(next);
-    onSortChange?.(next);
-  }
+  const { rows, activeSort, toggleSort } = useSort({ data, columns, defaultSort, onSortChange });
+  const { isSelected, allSelected, hasRows, toggleRow, toggleAll } = useSelection({
+    data,
+    getRowId,
+    onSelectionChange,
+  });
+  const columnCount = columns.length + (selectable ? 1 : 0);
 
   return (
     <table className="dt-table">
       <caption className="dt-caption">{caption}</caption>
       <thead className="dt-head">
         <tr className="dt-header-row">
+          {selectable && (
+            <th scope="col" className="dt-checkbox-cell">
+              <input
+                type="checkbox"
+                aria-label="Select all rows"
+                checked={allSelected}
+                disabled={!hasRows}
+                onChange={toggleAll}
+              />
+            </th>
+          )}
           {columns.map((column) => {
             const sorted = activeSort?.columnId === column.id ? activeSort.direction : undefined;
             return (
@@ -73,7 +78,7 @@ export function DataTable<T>({
                 aria-sort={sorted && ARIA_SORT[sorted]}
               >
                 {column.sortable ? (
-                  <button type="button" className="dt-sort-button" onClick={() => handleSort(column.id)}>
+                  <button type="button" className="dt-sort-button" onClick={() => toggleSort(column.id)}>
                     {column.header}
                     {sorted && (
                       <span className="dt-sort-icon" aria-hidden="true">
@@ -97,22 +102,36 @@ export function DataTable<T>({
             </td>
           </tr>
         )}
-        {rows.map((row) => (
-          <tr key={getRowId(row)} className="dt-row">
-            {columns.map((column, index) => {
-              const content = renderCell(row, column);
-              return index === 0 ? (
-                <th key={column.id} scope="row" className="dt-cell dt-row-header" data-align={column.align}>
-                  {content}
-                </th>
-              ) : (
-                <td key={column.id} className="dt-cell" data-align={column.align}>
-                  {content}
+        {rows.map((row) => {
+          const id = getRowId(row);
+          const selected = isSelected(id);
+          return (
+            <tr key={id} className="dt-row" data-selected={selected || undefined}>
+              {selectable && (
+                <td className="dt-checkbox-cell">
+                  <input
+                    type="checkbox"
+                    aria-label={getRowLabel(row)}
+                    checked={selected}
+                    onChange={() => toggleRow(id)}
+                  />
                 </td>
-              );
-            })}
-          </tr>
-        ))}
+              )}
+              {columns.map((column, index) => {
+                const content = renderCell(row, column);
+                return index === 0 ? (
+                  <th key={column.id} scope="row" className="dt-cell dt-row-header" data-align={column.align}>
+                    {content}
+                  </th>
+                ) : (
+                  <td key={column.id} className="dt-cell" data-align={column.align}>
+                    {content}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

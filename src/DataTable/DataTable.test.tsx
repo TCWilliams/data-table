@@ -300,4 +300,75 @@ describe('DataTable', () => {
       expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('aria-sort', 'ascending');
     });
   });
+
+  describe('selection', () => {
+    const columns: Column<Invoice>[] = [
+      { id: 'customer', header: 'Customer', accessor: 'customer' },
+      { id: 'total', header: 'Total', accessor: 'total', sortable: true },
+    ];
+    const table = (data: Invoice[], onSelectionChange = vi.fn()) => (
+      <DataTable
+        caption="Invoices"
+        data={data}
+        columns={columns}
+        getRowId={(i) => String(i.number)}
+        selectable
+        getRowLabel={(i) => `Select invoice ${i.number}`}
+        onSelectionChange={onSelectionChange}
+      />
+    );
+    const rowCheckbox = (number: number) => screen.getByRole('checkbox', { name: `Select invoice ${number}` });
+    const selectAll = () => screen.getByRole('checkbox', { name: 'Select all rows' });
+    const customerOrder = () => bodyRows().map((row) => within(row).getByRole('rowheader').textContent);
+
+    it('selects a row, then all rows, then clears them with select-all', async () => {
+      const user = userEvent.setup();
+      const onSelectionChange = vi.fn();
+      render(table(invoices, onSelectionChange));
+
+      await user.click(rowCheckbox(1002));
+      expect(rowCheckbox(1002)).toBeChecked();
+      expect(rowCheckbox(1002).closest('tr')).toHaveAttribute('data-selected');
+      expect(selectAll()).not.toBeChecked();
+      expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(['1002']));
+
+      await user.click(selectAll());
+      for (const number of [1001, 1002, 1003]) expect(rowCheckbox(number)).toBeChecked();
+      expect(selectAll()).toBeChecked();
+      expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(['1001', '1002', '1003']));
+
+      await user.click(selectAll());
+      for (const number of [1001, 1002, 1003]) expect(rowCheckbox(number)).not.toBeChecked();
+      expect(selectAll()).not.toBeChecked();
+      expect(onSelectionChange).toHaveBeenLastCalledWith(new Set());
+    });
+
+    it('keeps the selection on the same rows after a re-sort', async () => {
+      const user = userEvent.setup();
+      render(table(invoices));
+
+      await user.click(rowCheckbox(1001));
+      await user.click(screen.getByRole('button', { name: 'Total' }));
+
+      expect(customerOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
+      const selectedRow = rowCheckbox(1001).closest('tr')!;
+      expect(rowCheckbox(1001)).toBeChecked();
+      expect(within(selectedRow).getByRole('rowheader', { name: 'Kiwi Co' })).toBeInTheDocument();
+      expect(rowCheckbox(1002)).not.toBeChecked();
+      expect(rowCheckbox(1003)).not.toBeChecked();
+    });
+
+    it('leaves rows removed from data out of onSelectionChange', async () => {
+      const user = userEvent.setup();
+      const onSelectionChange = vi.fn();
+      const { rerender } = render(table(invoices, onSelectionChange));
+
+      await user.click(rowCheckbox(1001));
+      await user.click(rowCheckbox(1002));
+      rerender(table(invoices.filter((i) => i.number !== 1002), onSelectionChange));
+      await user.click(rowCheckbox(1003));
+
+      expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(['1001', '1003']));
+    });
+  });
 });
