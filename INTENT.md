@@ -75,6 +75,9 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
   Controlled `sort`/`selectedIds` (programmatic reset) is revisit-next.
 - `null`, `undefined` and `[]` data all show the same `emptyState` (headers stay visible). One prop keeps the API small;
   a consumer who needs a distinct "failed to load" message can render it outside the table.
+- The first column is the row header (`<th scope="row">`), so screen readers announce the row
+as users move across cells. No API needed; a `rowHeader` column option is revisit-next if a
+consumer's first column isn't the row's name.
 
 # Trade-offs
 
@@ -113,6 +116,8 @@ lose the link between `selectable` and `getRowLabel`, so those call sites need `
 **`null`, `undefined` and `[]` data all show the same `emptyState`**
 One prop keeps the API small. The table can't show "no data yet" differently from "no results";
 a consumer who needs that renders their own message outside the table.
+
+Duplicate ids aren't detected: unique ids are the consumer's responsibility. A development-only warning would catch it.
 
 ## Open (decide, then move to Accepted)
 
