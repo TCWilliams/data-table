@@ -22,8 +22,9 @@ function bodyRows() {
   return within(body!).getAllByRole('row');
 }
 
+/** Text of every body cell in a row, including the row header. */
 function cellTexts(row: HTMLElement) {
-  return within(row).getAllByRole('cell').map((cell) => cell.textContent);
+  return Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent);
 }
 
 describe('DataTable', () => {
@@ -125,15 +126,34 @@ describe('DataTable', () => {
 
     const [nullRow, undefinedRow, emptyRow] = bodyRows();
     for (const row of [nullRow!, undefinedRow!]) {
-      const cells = within(row).getAllByRole('cell', { name: 'No value' });
-      expect(cells).toHaveLength(2);
-      for (const cell of cells) {
+      const phone = within(row).getByRole('rowheader', { name: 'No value' });
+      const note = within(row).getByRole('cell', { name: 'No value' });
+      for (const cell of [phone, note]) {
         expect(within(cell).getByText('—')).toHaveAttribute('aria-hidden', 'true');
       }
     }
 
-    const [emptyPhone, missingNote] = within(emptyRow!).getAllByRole('cell');
-    expect(emptyPhone).toBeEmptyDOMElement();
-    expect(missingNote).toHaveAccessibleName('No value');
+    expect(within(emptyRow!).getByRole('rowheader')).toBeEmptyDOMElement();
+    expect(within(emptyRow!).getByRole('cell')).toHaveAccessibleName('No value');
+  });
+
+  it('makes the first column the row header and exposes align for styling', () => {
+    render(
+      <DataTable
+        caption="Invoices"
+        data={invoices}
+        columns={[
+          { id: 'customer', header: 'Customer', accessor: 'customer' },
+          { id: 'total', header: 'Total', accessor: 'total', align: 'end' },
+        ]}
+        getRowId={(i) => String(i.number)}
+      />,
+    );
+
+    const [firstRow] = bodyRows();
+    expect(within(firstRow!).getByRole('rowheader', { name: 'Kiwi Co' })).toBeInTheDocument();
+    expect(within(firstRow!).getByRole('cell', { name: '250' })).toHaveAttribute('data-align', 'end');
+    expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('data-align', 'end');
+    expect(screen.getByRole('columnheader', { name: 'Customer' })).not.toHaveAttribute('data-align');
   });
 });

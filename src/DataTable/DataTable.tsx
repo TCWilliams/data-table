@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { getCellValue } from './getCellValue.ts';
+import { getCellValue } from './getCellValue';
 import type { Column, DataTableProps } from './types';
 
 // Screen readers skip or misread a lone dash, so they get text instead.
@@ -29,9 +29,9 @@ export function DataTable<T>({ data, columns, getRowId, caption }: DataTableProp
     <table className="dt-table">
       <caption className="dt-caption">{caption}</caption>
       <thead className="dt-head">
-        <tr className="dt-row">
+        <tr className="dt-header-row">
           {columns.map((column) => (
-            <th key={column.id} scope="col" className="dt-header-cell">
+            <th key={column.id} scope="col" className="dt-header-cell" data-align={column.align}>
               {column.header}
             </th>
           ))}
@@ -40,11 +40,18 @@ export function DataTable<T>({ data, columns, getRowId, caption }: DataTableProp
       <tbody className="dt-body">
         {rows.map((row) => (
           <tr key={getRowId(row)} className="dt-row">
-            {columns.map((column) => (
-              <td key={column.id} className="dt-cell">
-                {renderCell(row, column)}
-              </td>
-            ))}
+            {columns.map((column, index) => {
+              const content = renderCell(row, column);
+              return index === 0 ? (
+                <th key={column.id} scope="row" className="dt-cell dt-row-header" data-align={column.align}>
+                  {content}
+                </th>
+              ) : (
+                <td key={column.id} className="dt-cell" data-align={column.align}>
+                  {content}
+                </td>
+              );
+            })}
           </tr>
         ))}
       </tbody>
