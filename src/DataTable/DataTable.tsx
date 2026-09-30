@@ -10,6 +10,9 @@ const MISSING_VALUE = (
   </>
 );
 
+const DEFAULT_EMPTY_STATE = 'No data';
+const LOADING_STATE = 'Loading…';
+
 /**
  * Renders a cell's content: the column's `cell` if given, otherwise `String(value)`.
  *
@@ -22,8 +25,16 @@ function renderCell<T>(row: T, column: Column<T>): ReactNode {
   return value === null || value === undefined ? MISSING_VALUE : String(value);
 }
 
-export function DataTable<T>({ data, columns, getRowId, caption }: DataTableProps<T>) {
+export function DataTable<T>({
+  data,
+  columns,
+  getRowId,
+  caption,
+  loading = false,
+  emptyState = DEFAULT_EMPTY_STATE,
+}: DataTableProps<T>) {
   const rows = data ?? [];
+  const columnCount = columns.length;
 
   return (
     <table className="dt-table">
@@ -38,6 +49,13 @@ export function DataTable<T>({ data, columns, getRowId, caption }: DataTableProp
         </tr>
       </thead>
       <tbody className="dt-body">
+        {rows.length === 0 && (
+          <tr>
+            <td className="dt-state" colSpan={columnCount}>
+              {loading ? LOADING_STATE : emptyState}
+            </td>
+          </tr>
+        )}
         {rows.map((row) => (
           <tr key={getRowId(row)} className="dt-row">
             {columns.map((column, index) => {

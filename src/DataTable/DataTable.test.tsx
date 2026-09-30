@@ -11,6 +11,11 @@ const users: User[] = [
   { id: 'u2', name: 'Ben Carter', email: 'ben@example.com' },
 ];
 
+const userColumns: Column<User>[] = [
+  { id: 'name', header: 'Name', accessor: 'name' },
+  { id: 'email', header: 'Email', accessor: 'email' },
+];
+
 const invoices: Invoice[] = [
   { number: 1001, customer: 'Kiwi Co', total: 250, paid: true },
   { number: 1002, customer: 'Tui Ltd', total: 80.5, paid: false },
@@ -29,10 +34,6 @@ function cellTexts(row: HTMLElement) {
 
 describe('DataTable', () => {
   it('renders headers, rows and cells for different data shapes', () => {
-    const userColumns: Column<User>[] = [
-      { id: 'name', header: 'Name', accessor: 'name' },
-      { id: 'email', header: 'Email', accessor: 'email' },
-    ];
     const { unmount } = render(
       <DataTable caption="Users" data={users} columns={userColumns} getRowId={(u) => u.id} />,
     );
@@ -155,5 +156,50 @@ describe('DataTable', () => {
     expect(within(firstRow!).getByRole('cell', { name: '250' })).toHaveAttribute('data-align', 'end');
     expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('data-align', 'end');
     expect(screen.getByRole('columnheader', { name: 'Customer' })).not.toHaveAttribute('data-align');
+  });
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['[]', []],
+  ])('shows "No data" across all columns for %s data, with headers visible', (_, data) => {
+    render(<DataTable caption="Users" data={data} columns={userColumns} getRowId={(u) => u.id} />);
+
+    expect(screen.getAllByRole('columnheader').map((th) => th.textContent)).toEqual(['Name', 'Email']);
+    expect(screen.getByRole('cell', { name: 'No data' })).toHaveAttribute('colspan', '2');
+  });
+
+  it('shows a custom emptyState instead of the default', () => {
+    render(
+      <DataTable
+        caption="Users"
+        data={[]}
+        columns={userColumns}
+        getRowId={(u) => u.id}
+        emptyState={<span>No users yet</span>}
+      />,
+    );
+
+    expect(screen.getByRole('cell', { name: 'No users yet' })).toBeInTheDocument();
+    expect(screen.queryByText('No data')).not.toBeInTheDocument();
+  });
+
+  it('shows "Loading…" while loading with no rows, and the rows while loading with rows', () => {
+    const { rerender } = render(
+      <DataTable caption="Users" data={null} columns={userColumns} getRowId={(u) => u.id} loading />,
+    );
+
+    expect(screen.getByRole('cell', { name: 'Loading…' })).toHaveAttribute('colspan', '2');
+    expect(screen.queryByText('No data')).not.toBeInTheDocument();
+
+    rerender(
+      <DataTable caption="Users" data={users} columns={userColumns} getRowId={(u) => u.id} loading />,
+    );
+
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+    expect(bodyRows().map(cellTexts)).toEqual([
+      ['Aroha Ngata', 'aroha@example.com'],
+      ['Ben Carter', 'ben@example.com'],
+    ]);
   });
 });
