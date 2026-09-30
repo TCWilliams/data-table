@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import './tokens.css';
+import './DataTable.css';
 import { getCellValue } from './getCellValue';
 import type { Column, DataTableProps } from './types';
 import { useSelection } from './useSelection';
@@ -54,93 +56,95 @@ export function DataTable<T>({
   const columnCount = columns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0);
 
   return (
-    <table className="dt-table">
-      <caption className="dt-caption">{caption}</caption>
-      <thead className="dt-head">
-        <tr className="dt-header-row">
-          {selectable && (
-            <th scope="col" className="dt-checkbox-cell">
-              <input
-                type="checkbox"
-                aria-label="Select all rows"
-                checked={allSelected}
-                disabled={!hasRows}
-                onChange={toggleAll}
-              />
-            </th>
-          )}
-          {columns.map((column) => {
-            const sorted = activeSort?.columnId === column.id ? activeSort.direction : undefined;
-            return (
-              <th
-                key={column.id}
-                scope="col"
-                className="dt-header-cell"
-                data-align={column.align}
-                aria-sort={sorted && ARIA_SORT[sorted]}
-              >
-                {column.sortable ? (
-                  <button type="button" className="dt-sort-button" onClick={() => toggleSort(column.id)}>
-                    {column.header}
-                    {sorted && (
-                      <span className="dt-sort-icon" aria-hidden="true">
-                        {SORT_ICON[sorted]}
-                      </span>
-                    )}
-                  </button>
-                ) : (
-                  column.header
-                )}
+    <div className="dt-container">
+      <table className="dt-table">
+        <caption className="dt-caption">{caption}</caption>
+        <thead className="dt-head">
+          <tr className="dt-header-row">
+            {selectable && (
+              <th scope="col" className="dt-checkbox-cell">
+                <input
+                  type="checkbox"
+                  aria-label="Select all rows"
+                  checked={allSelected}
+                  disabled={!hasRows}
+                  onChange={toggleAll}
+                />
               </th>
+            )}
+            {columns.map((column) => {
+              const sorted = activeSort?.columnId === column.id ? activeSort.direction : undefined;
+              return (
+                <th
+                  key={column.id}
+                  scope="col"
+                  className="dt-header-cell"
+                  data-align={column.align}
+                  aria-sort={sorted && ARIA_SORT[sorted]}
+                >
+                  {column.sortable ? (
+                    <button type="button" className="dt-sort-button" onClick={() => toggleSort(column.id)}>
+                      {column.header}
+                      {sorted && (
+                        <span className="dt-sort-icon" aria-hidden="true">
+                          {SORT_ICON[sorted]}
+                        </span>
+                      )}
+                    </button>
+                  ) : (
+                    column.header
+                  )}
+                </th>
+              );
+            })}
+            {rowActions && (
+              <th scope="col" className="dt-actions-cell">
+                {ACTIONS_HEADER}
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody className="dt-body">
+          {rows.length === 0 && (
+            <tr>
+              <td className="dt-state" colSpan={columnCount}>
+                {loading ? LOADING_STATE : emptyState}
+              </td>
+            </tr>
+          )}
+          {rows.map((row) => {
+            const id = getRowId(row);
+            const selected = isSelected(id);
+            return (
+              <tr key={id} className="dt-row" data-selected={selected || undefined}>
+                {selectable && (
+                  <td className="dt-checkbox-cell">
+                    <input
+                      type="checkbox"
+                      aria-label={getRowLabel(row)}
+                      checked={selected}
+                      onChange={() => toggleRow(id)}
+                    />
+                  </td>
+                )}
+                {columns.map((column, index) => {
+                  const content = renderCell(row, column);
+                  return index === 0 ? (
+                    <th key={column.id} scope="row" className="dt-cell dt-row-header" data-align={column.align}>
+                      {content}
+                    </th>
+                  ) : (
+                    <td key={column.id} className="dt-cell" data-align={column.align}>
+                      {content}
+                    </td>
+                  );
+                })}
+                {rowActions && <td className="dt-actions-cell">{rowActions(row)}</td>}
+              </tr>
             );
           })}
-          {rowActions && (
-            <th scope="col" className="dt-actions-cell">
-              {ACTIONS_HEADER}
-            </th>
-          )}
-        </tr>
-      </thead>
-      <tbody className="dt-body">
-        {rows.length === 0 && (
-          <tr>
-            <td className="dt-state" colSpan={columnCount}>
-              {loading ? LOADING_STATE : emptyState}
-            </td>
-          </tr>
-        )}
-        {rows.map((row) => {
-          const id = getRowId(row);
-          const selected = isSelected(id);
-          return (
-            <tr key={id} className="dt-row" data-selected={selected || undefined}>
-              {selectable && (
-                <td className="dt-checkbox-cell">
-                  <input
-                    type="checkbox"
-                    aria-label={getRowLabel(row)}
-                    checked={selected}
-                    onChange={() => toggleRow(id)}
-                  />
-                </td>
-              )}
-              {columns.map((column, index) => {
-                const content = renderCell(row, column);
-                return index === 0 ? (
-                  <th key={column.id} scope="row" className="dt-cell dt-row-header" data-align={column.align}>
-                    {content}
-                  </th>
-                ) : (
-                  <td key={column.id} className="dt-cell" data-align={column.align}>
-                    {content}
-                  </td>
-                );
-              })}
-              {rowActions && <td className="dt-actions-cell">{rowActions(row)}</td>}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   );
 }

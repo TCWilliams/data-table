@@ -1,0 +1,47 @@
+:root {
+  --dt-font-size-cell: 1rem;
+  --dt-font-size-header: 0.875rem;
+  --dt-font-weight-cell: 400;
+  --dt-font-weight-header: 600;
+  --dt-row-height: 3.5rem;
+  --dt-cell-padding-block: 0.75rem;
+  --dt-cell-padding-inline: 1.25rem;
+  --dt-column-narrow: 3.5rem;
+  --dt-radius: 0.75rem;
+  --dt-border-width: 1px;
+  --dt-sort-gap: 0.5rem;
+  --dt-checkbox-size: 1.125rem;
+  --dt-focus-ring-width: 2px;
+  --dt-focus-ring-offset: 2px;
+  --dt-color-scheme: light;
+  --dt-surface: #ffffff;
+  --dt-header-bg: #f3f4f6;
+  --dt-text: #111827;
+  --dt-header-text: #111827;
+  --dt-text-muted: #6b7280;
+  --dt-border: #e5e7eb;
+  --dt-accent: #3b82f6;
+  --dt-focus-ring: #2563eb;
+  --dt-row-hover: #f9fafb;
+  --dt-row-selected: #eff6ff;
+  --dt-checkbox-bg: #ffffff;
+  --dt-checkbox-border: #d1d5db;
+  --dt-checkbox-check: #ffffff;
+}
+
+[data-theme='dark'] {
+  --dt-color-scheme: dark;
+  --dt-surface: #1c1f26;
+  --dt-header-bg: #1c1f26;
+  --dt-text: #f3f4f6;
+  --dt-header-text: #f3f4f6;
+  --dt-text-muted: #9ca3af;
+  --dt-border: #3f4550;
+  --dt-accent: #3b82f6;
+  --dt-focus-ring: #93c5fd;
+  --dt-row-hover: #252a33;
+  --dt-row-selected: #1e3a5f;
+  --dt-checkbox-bg: #111318;
+  --dt-checkbox-border: #9ca3af;
+  --dt-checkbox-check: #ffffff;
+}

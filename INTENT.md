@@ -48,8 +48,7 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 **Data**
 - Never mutate the consumer's data.
 - Row identity comes from `getRowId`, never array position. Ids must be unique.
-- Selection is stored by id and filtered against the current `data` whenever it's shown or reported,
-  so it survives a refetch. `onSelectionChange` never includes rows that aren't in `data`.
+- Selection is stored by id and filtered against the current `data` whenever it's shown or reported, so it survives a refetch. `onSelectionChange` never includes rows that aren't in `data`.
 - Sort is kept when `data` changes.
 
 **Accessibility**
@@ -60,7 +59,7 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 
 **Theming**
 - Dark mode: `data-theme="dark"` on any ancestor.
-- Re-skin by redefining `--dt-*` tokens on a wrapper. Tokens cover colour, spacing, row height, radius and font size.
+- Re-skin by redefining `--dt-*` tokens on a wrapper. Tokens cover colour, spacing, row height, radius, font size, hover/selected tints and the focus ring.
 - No theme logic in TSX. Component CSS uses tokens only.
 
 ## Decisions
@@ -69,45 +68,38 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 - **Default sort order:** numbers numerically, Dates chronologically, everything else as locale-aware text. Other types need a `sortFn`.
 - **Missing values sort last in both directions** (`null`, `undefined`, `NaN`, invalid Dates), so gaps stay at the bottom. Missing values and ties keep their original order.
 - **A custom `sortFn` has full control, including nulls.** The table only reverses it for descending.
-- **Sorting a column cycles ascending, descending, then back to the original order.** Arrows are
-  ↑ and ↓; unsorted columns show none, as in the design. `sortable` alone makes a column sortable.
-- **`null`, `undefined` and `[]` data all show the same `emptyState`**, with headers still visible.
-  One prop keeps the API small. A consumer who needs a "failed to load" message renders it outside the table.
-- **Missing cell values show "—" on screen and "No value" to screen readers**, because screen readers skip
-  or misread a lone dash. A custom `cell` gets the raw `null`/`undefined` and decides for itself.
+- **Sorting a column cycles ascending, descending, then back to the original order.** Arrows are ↑ and ↓; unsorted columns show none, as in the design. `sortable` alone makes a column sortable.
+- **`null`, `undefined` and `[]` data all show the same `emptyState`**, with headers still visible. One prop keeps the API small. A consumer who needs a "failed to load" message renders it outside the table.
+- **Missing cell values show "—" on screen and "No value" to screen readers**, because screen readers skip or misread a lone dash. A custom `cell` gets the raw `null`/`undefined` and decides for itself.
 - **Loading with existing rows just shows the rows**, with no indicator. The consumer can show progress outside the table.
-- **The first column is the row header** (`<th scope="row">`), so screen readers announce the row as users
-  move across cells. A `rowHeader` column option is "revisit next" for tables whose first column isn't the row's name.
-- **"Select all rows"** is checked only when every row is selected. Clicking it selects all rows,
-  or clears the whole selection (including remembered rows not in `data`) when all are selected.
+- **The first column is the row header** (`<th scope="row">`), so screen readers announce the row as users move across cells. A `rowHeader` column option is "revisit next" for tables whose first column isn't the row's name.
+- **"Select all rows"** is checked only when every row is selected. Clicking it selects all rows,or clears the whole selection (including remembered rows not in `data`) when all are selected.
+- **Row hover is a subtle tint; selected is a stronger tint.** Selected wins, so a selected row does not change on hover.
+- **Focus is a 2px outline from `--dt-focus-ring`**, a token of its own so a re-skin can change it without changing the accent.
+- **Long text truncates** with an ellipsis. Screen readers still hear the full text.
+- **The caption is screen-reader only**, hidden visually so the table still has an accessible name.
 
-## Still to decide (move each to Decisions)
-- Styles for row hover, selected rows, and the focus ring
-- Long text: wrap or truncate
-- Caption: visible, or screen-reader-only? If it's one choice for every table, no prop is needed; if each consumer chooses, it needs one.
 
 ## Accepted trade-offs
 Choices with a known cost.
-- **Cell `value` is `unknown`.** Typing it per column needs a second type parameter on every column,
-  which makes a mixed list of columns hard to type. Consumers still get a fully typed `row`.
-- **`SortState.columnId` is a plain `string`.** A typo in `defaultSort` is silently ignored.
-  Linking it to real column ids needs another type parameter; a development-only warning would cover most of the risk.
-- **`sortable: true` with no `accessor` or `sortFn` still compiles**, with nothing to sort by.
-  Preventing it in the types would complicate every column for a rare mistake.
+- **Cell `value` is `unknown`.** Typing it per column needs a second type parameter on every column, which makes a mixed list of columns hard to type. Consumers still get a fully typed `row`.
+- **`SortState.columnId` is a plain `string`.** A typo in `defaultSort` is silently ignored. Linking it to real column ids needs another type parameter; a development-only warning would cover most of the risk.
+- **`sortable: true` with no `accessor` or `sortFn` still compiles**, with nothing to sort by. Preventing it in the types would complicate every column for a rare mistake.
 - **`header` is a `string`.** No icons or markup in headers, but the sort button's accessible name stays simple.
 - **`getRowId` returns a `string`.** Numeric ids need `String(row.id)`; in return `onSelectionChange` always reports a `ReadonlySet<string>`.
 - **Duplicate ids aren't detected.** Unique ids are the consumer's job; a development-only warning would catch it.
 - **`onSelectionChange` without `selectable` does nothing**, silently. Acceptable for a rare, harmless mistake.
-- **`onSelectionChange` only fires on checkbox clicks**, not when `data` changes. If a refetch drops
-  a selected row, the consumer's last reported selection still includes it until the next click.
-- **`getRowLabel` is required when `selectable` is `true`**, so unnamed checkboxes fail to compile.
-  The cost: props built in pieces (for example with `Partial<DataTableProps<T>>`) must set `selectable` and `getRowLabel` together.
+- **`onSelectionChange` only fires on checkbox clicks**, not when `data` changes. If a refetch drops a selected row, the consumer's last reported selection still includes it until the next click.
+- **`getRowLabel` is required when `selectable` is `true`**, so unnamed checkboxes fail to compile. The cost: props built in pieces (for example with `Partial<DataTableProps<T>>`) must set `selectable` and `getRowLabel` together.
 - **The "Actions" header and "Loading…" text are fixed.** They can't be renamed or translated. Props can be added later without breaking anyone.
 - **No controlled `sort` or `selectedIds`.** Consumers can't reset the sort or clear the selection after a bulk action. First thing to revisit.
 - **A custom `sortFn` can't keep nulls last when descending.** It isn't told the direction and the table reverses it, so nulls placed last ascending come first descending. Passing the direction to `sortFn` would fix it at the cost of a more complex API.
 - **Mixed sort as text.** Booleans sort "false" before "true", a number against a string sorts as text, and objects are unsorted. Consumers use a `sortFn`.
 - **Accessors run on every comparison,** not once per row. Computing each row's value once before sorting would fix it for large data.
 - **No half-checked state on "Select all rows".** It can't show that some rows are selected. Cut for time; a small addition later.
+- **Checkboxes are drawn in CSS, not native.** Native checkboxes ignore background and border, so the Figma's dark empty boxes would not show. The cost is a CSS tick instead of the OS one.
+- **Actions cells set `color` to the accent.** Consumer SVGs with `fill="currentColor"` pick up the blue; a hardcoded fill will not.
+- **Truncated text is cut off for sighted users.** Consumers who need the full string can wrap it in `cell`.
 
 ## Deliverables
 - Component and supporting files

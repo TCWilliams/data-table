@@ -1,0 +1,168 @@
+.dt-container {
+  position: relative;
+  overflow: auto;
+  border: var(--dt-border-width) solid var(--dt-border);
+  border-radius: var(--dt-radius);
+  background: var(--dt-surface);
+  color: var(--dt-text);
+  font-size: var(--dt-font-size-cell);
+  font-weight: var(--dt-font-weight-cell);
+  color-scheme: var(--dt-color-scheme);
+}
+
+.dt-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.dt-caption,
+.dt-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dt-header-row > *,
+.dt-row > *,
+.dt-state {
+  box-sizing: border-box;
+  height: var(--dt-row-height);
+  padding-block: var(--dt-cell-padding-block);
+  padding-inline: var(--dt-cell-padding-inline);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.dt-head th {
+  background: var(--dt-header-bg);
+  color: var(--dt-header-text);
+  font-size: var(--dt-font-size-header);
+  font-weight: var(--dt-font-weight-header);
+  border-bottom: var(--dt-border-width) solid var(--dt-border);
+}
+
+.dt-row > * {
+  border-bottom: var(--dt-border-width) solid var(--dt-border);
+}
+
+.dt-row:last-child > * {
+  border-bottom: none;
+}
+
+.dt-row:hover {
+  background: var(--dt-row-hover);
+}
+
+.dt-row[data-selected] {
+  background: var(--dt-row-selected);
+}
+
+.dt-header-cell,
+.dt-cell,
+.dt-row-header {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dt-row-header {
+  background: transparent;
+  color: inherit;
+  font-size: var(--dt-font-size-cell);
+  font-weight: var(--dt-font-weight-cell);
+}
+
+.dt-checkbox-cell,
+.dt-actions-cell {
+  width: var(--dt-column-narrow);
+}
+
+.dt-checkbox-cell {
+  border-inline-end: var(--dt-border-width) solid var(--dt-border);
+}
+
+.dt-actions-cell {
+  border-inline-start: var(--dt-border-width) solid var(--dt-border);
+  color: var(--dt-accent);
+}
+
+.dt-checkbox-cell input {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  width: var(--dt-checkbox-size);
+  height: var(--dt-checkbox-size);
+  margin: 0;
+  background-color: var(--dt-checkbox-bg);
+  border: var(--dt-border-width) solid var(--dt-checkbox-border);
+  border-radius: var(--dt-border-width);
+  cursor: pointer;
+}
+
+.dt-checkbox-cell input:checked {
+  background-color: var(--dt-accent);
+  border-color: var(--dt-accent);
+}
+
+.dt-checkbox-cell input:checked::after {
+  content: '';
+  width: 0.28em;
+  height: 0.5em;
+  margin-bottom: 0.12em;
+  border: solid var(--dt-checkbox-check);
+  border-width: 0 var(--dt-border-width) var(--dt-border-width) 0;
+  transform: rotate(45deg);
+}
+
+.dt-checkbox-cell input:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.dt-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dt-sort-gap);
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dt-sort-icon {
+  flex-shrink: 0;
+}
+
+.dt-sort-button:focus-visible,
+.dt-checkbox-cell input:focus-visible {
+  outline: var(--dt-focus-ring-width) solid var(--dt-focus-ring);
+  outline-offset: var(--dt-focus-ring-offset);
+}
+
+.dt-state {
+  color: var(--dt-text-muted);
+}
+
+.dt-header-cell[data-align='center'],
+.dt-cell[data-align='center'],
+.dt-row-header[data-align='center'] {
+  text-align: center;
+}
+
+.dt-header-cell[data-align='end'],
+.dt-cell[data-align='end'],
+.dt-row-header[data-align='end'] {
+  text-align: end;
+}
