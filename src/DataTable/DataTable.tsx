@@ -14,6 +14,7 @@ const MISSING_VALUE = (
 
 const DEFAULT_EMPTY_STATE = 'No data';
 const LOADING_STATE = 'Loading…';
+const ACTIONS_HEADER = 'Actions';
 
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const;
 const SORT_ICON = { asc: '↑', desc: '↓' } as const;
@@ -42,6 +43,7 @@ export function DataTable<T>({
   selectable,
   getRowLabel,
   onSelectionChange,
+  rowActions,
 }: DataTableProps<T>) {
   const { rows, activeSort, toggleSort } = useSort({ data, columns, defaultSort, onSortChange });
   const { isSelected, allSelected, hasRows, toggleRow, toggleAll } = useSelection({
@@ -49,7 +51,7 @@ export function DataTable<T>({
     getRowId,
     onSelectionChange,
   });
-  const columnCount = columns.length + (selectable ? 1 : 0);
+  const columnCount = columns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0);
 
   return (
     <table className="dt-table">
@@ -92,6 +94,11 @@ export function DataTable<T>({
               </th>
             );
           })}
+          {rowActions && (
+            <th scope="col" className="dt-actions-cell">
+              {ACTIONS_HEADER}
+            </th>
+          )}
         </tr>
       </thead>
       <tbody className="dt-body">
@@ -129,6 +136,7 @@ export function DataTable<T>({
                   </td>
                 );
               })}
+              {rowActions && <td className="dt-actions-cell">{rowActions(row)}</td>}
             </tr>
           );
         })}

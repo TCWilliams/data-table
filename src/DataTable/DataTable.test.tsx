@@ -371,4 +371,55 @@ describe('DataTable', () => {
       expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(['1001', '1003']));
     });
   });
+
+  describe('row actions', () => {
+    const columns: Column<Invoice>[] = [
+      { id: 'customer', header: 'Customer', accessor: 'customer' },
+      { id: 'total', header: 'Total', accessor: 'total', sortable: true },
+    ];
+    const sendButton = (invoice: Invoice) => (
+      <button type="button" aria-label={`Send invoice ${invoice.number}`}>
+        <svg aria-hidden="true" />
+      </button>
+    );
+
+    it('adds a last "Actions" column holding the consumer\'s content for each row', () => {
+      render(
+        <DataTable
+          caption="Invoices"
+          data={invoices}
+          columns={columns}
+          getRowId={(i) => String(i.number)}
+          rowActions={sendButton}
+        />,
+      );
+
+      const headers = screen.getAllByRole('columnheader');
+      expect(headers.map((th) => th.textContent)).toEqual(['Customer', 'Total', 'Actions']);
+      expect(within(headers.at(-1)!).queryByRole('button')).not.toBeInTheDocument();
+
+      for (const [index, row] of bodyRows().entries()) {
+        const lastCell = within(row).getAllByRole('cell').at(-1)!;
+        const number = invoices[index]!.number;
+        expect(within(lastCell).getByRole('button', { name: `Send invoice ${number}` })).toBeInTheDocument();
+      }
+    });
+
+    it('spans the empty state across the checkbox, data and Actions columns', () => {
+      render(
+        <DataTable
+          caption="Invoices"
+          data={[]}
+          columns={columns}
+          getRowId={(i) => String(i.number)}
+          selectable
+          getRowLabel={(i) => `Select invoice ${i.number}`}
+          rowActions={sendButton}
+        />,
+      );
+
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+      expect(screen.getByRole('cell', { name: 'No data' })).toHaveAttribute('colspan', '4');
+    });
+  });
 });

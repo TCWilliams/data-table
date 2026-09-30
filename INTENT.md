@@ -66,10 +66,11 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 ## Decisions
 - **`defaultSort` sets the initial sort only**, like React's `defaultValue`; the table owns sort after that.
   It matches the sorted Figma frame and covers "newest first". It doesn't fire `onSortChange` on mount.
-- **Default sort order:** numbers numerically, Dates chronologically, everything else as browser local text. Other types need a `sortFn`.
+- **Default sort order:** numbers numerically, Dates chronologically, everything else as locale-aware text. Other types need a `sortFn`.
 - **Missing values sort last in both directions** (`null`, `undefined`, `NaN`, invalid Dates), so gaps stay at the bottom. Missing values and ties keep their original order.
 - **A custom `sortFn` has full control, including nulls.** The table only reverses it for descending.
-
+- **Sorting a column cycles ascending, descending, then back to the original order.** Arrows are
+  ↑ and ↓; unsorted columns show none, as in the design. `sortable` alone makes a column sortable.
 - **`null`, `undefined` and `[]` data all show the same `emptyState`**, with headers still visible.
   One prop keeps the API small. A consumer who needs a "failed to load" message renders it outside the table.
 - **Missing cell values show "—" on screen and "No value" to screen readers**, because screen readers skip
@@ -77,10 +78,8 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 - **Loading with existing rows just shows the rows**, with no indicator. The consumer can show progress outside the table.
 - **The first column is the row header** (`<th scope="row">`), so screen readers announce the row as users
   move across cells. A `rowHeader` column option is "revisit next" for tables whose first column isn't the row's name.
-
-- Click cycle for a sortable header: ascending, then descending, then unsorted
-
-- Header checkbox "Select all rows": checked when every row is selected otherwise unchecked. clicking it selects all rows, or clears them all when all are selected.
+- **"Select all rows"** is checked only when every row is selected. Clicking it selects all rows,
+  or clears the whole selection (including remembered rows not in `data`) when all are selected.
 
 ## Still to decide (move each to Decisions)
 - Styles for row hover, selected rows, and the focus ring
@@ -88,7 +87,7 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 - Caption: visible, or screen-reader-only? If it's one choice for every table, no prop is needed; if each consumer chooses, it needs one.
 
 ## Accepted trade-offs
-Choices in `types.ts` with a known cost.
+Choices with a known cost.
 - **Cell `value` is `unknown`.** Typing it per column needs a second type parameter on every column,
   which makes a mixed list of columns hard to type. Consumers still get a fully typed `row`.
 - **`SortState.columnId` is a plain `string`.** A typo in `defaultSort` is silently ignored.
@@ -99,19 +98,16 @@ Choices in `types.ts` with a known cost.
 - **`getRowId` returns a `string`.** Numeric ids need `String(row.id)`; in return `onSelectionChange` always reports a `ReadonlySet<string>`.
 - **Duplicate ids aren't detected.** Unique ids are the consumer's job; a development-only warning would catch it.
 - **`onSelectionChange` without `selectable` does nothing**, silently. Acceptable for a rare, harmless mistake.
+- **`onSelectionChange` only fires on checkbox clicks**, not when `data` changes. If a refetch drops
+  a selected row, the consumer's last reported selection still includes it until the next click.
 - **`getRowLabel` is required when `selectable` is `true`**, so unnamed checkboxes fail to compile.
   The cost: props built in pieces (for example with `Partial<DataTableProps<T>>`) must set `selectable` and `getRowLabel` together.
 - **The "Actions" header and "Loading…" text are fixed.** They can't be renamed or translated. Props can be added later without breaking anyone.
 - **No controlled `sort` or `selectedIds`.** Consumers can't reset the sort or clear the selection after a bulk action. First thing to revisit.
-
 - **A custom `sortFn` can't keep nulls last when descending.** It isn't told the direction and the table reverses it, so nulls placed last ascending come first descending. Passing the direction to `sortFn` would fix it at the cost of a more complex API.
-
 - **Mixed sort as text.** Booleans sort "false" before "true", a number against a string sorts as text, and objects are unsorted. Consumers use a `sortFn`.
 - **Accessors run on every comparison,** not once per row. Computing each row's value once before sorting would fix it for large data.
-
-- Header checkbox no half check on select all checkbox if some items are checked. Small code change but test overheads - cut it for time's sake.
-
-
+- **No half-checked state on "Select all rows".** It can't show that some rows are selected. Cut for time; a small addition later.
 
 ## Deliverables
 - Component and supporting files
