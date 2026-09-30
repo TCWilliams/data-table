@@ -1,0 +1,100 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.app {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 100vh;
+  padding: 2rem 1.5rem 4rem;
+  background: var(--dt-surface, #ffffff);
+  color: var(--dt-text, #111827);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.app h1,
+.app h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.app h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.app > div + div {
+  margin-top: 2.5rem;
+}
+
+.theme-toggle {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--dt-border, #e5e7eb);
+  border-radius: 0.5rem;
+  background: var(--dt-header-bg, #f3f4f6);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.theme-toggle:focus-visible {
+  outline: var(--dt-focus-ring-width, 2px) solid var(--dt-focus-ring, #2563eb);
+  outline-offset: var(--dt-focus-ring-offset, 2px);
+}
+
+.send-button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.send-button:focus-visible {
+  outline: var(--dt-focus-ring-width, 2px) solid var(--dt-focus-ring, #2563eb);
+  outline-offset: var(--dt-focus-ring-offset, 2px);
+}
+
+.status {
+  text-transform: capitalize;
+}
+
+.status-paid {
+  color: #15803d;
+}
+
+.status-pending {
+  color: #a16207;
+}
+
+.status-overdue {
+  color: #b91c1c;
+}
+
+[data-theme='dark'] .status-paid {
+  color: #4ade80;
+}
+
+[data-theme='dark'] .status-pending {
+  color: #facc15;
+}
+
+[data-theme='dark'] .status-overdue {
+  color: #f87171;
+}

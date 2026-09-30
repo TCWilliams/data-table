@@ -12,7 +12,7 @@
 
 .dt-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 40rem;
   table-layout: fixed;
 }
 
