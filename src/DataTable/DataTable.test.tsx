@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { DataTable } from './DataTable';
 import type { Column } from './types';
@@ -201,5 +202,102 @@ describe('DataTable', () => {
       ['Aroha Ngata', 'aroha@example.com'],
       ['Ben Carter', 'ben@example.com'],
     ]);
+  });
+
+  describe('sorting', () => {
+    const sortableColumns: Column<Invoice>[] = [
+      { id: 'customer', header: 'Customer', accessor: 'customer' },
+      { id: 'total', header: 'Total', accessor: 'total', sortable: true },
+    ];
+    const unsorted = [invoices[1]!, invoices[0]!, invoices[2]!];
+    const invoiceOrder = () => bodyRows().map((row) => cellTexts(row)[0]);
+
+    it('cycles ascending, descending, then original order on click', async () => {
+      const user = userEvent.setup();
+      const onSortChange = vi.fn();
+      render(
+        <DataTable
+          caption="Invoices"
+          data={unsorted}
+          columns={sortableColumns}
+          getRowId={(i) => String(i.number)}
+          onSortChange={onSortChange}
+        />,
+      );
+      const totalHeader = screen.getByRole('columnheader', { name: 'Total' });
+      const sortButton = within(totalHeader).getByRole('button', { name: 'Total' });
+
+      await user.click(sortButton);
+      expect(invoiceOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
+      expect(totalHeader).toHaveAttribute('aria-sort', 'ascending');
+      expect(onSortChange).toHaveBeenLastCalledWith({ columnId: 'total', direction: 'asc' });
+
+      await user.click(sortButton);
+      expect(invoiceOrder()).toEqual(['Kiwi Co', 'Tui Ltd', 'Kea Inc']);
+      expect(totalHeader).toHaveAttribute('aria-sort', 'descending');
+      expect(onSortChange).toHaveBeenLastCalledWith({ columnId: 'total', direction: 'desc' });
+
+      await user.click(sortButton);
+      expect(invoiceOrder()).toEqual(['Tui Ltd', 'Kiwi Co', 'Kea Inc']);
+      expect(totalHeader).not.toHaveAttribute('aria-sort');
+      expect(onSortChange).toHaveBeenLastCalledWith(null);
+
+      expect(onSortChange).toHaveBeenCalledTimes(3);
+      expect(screen.getByRole('columnheader', { name: 'Customer' })).not.toHaveAttribute('aria-sort');
+    });
+
+    it('starts from defaultSort without calling onSortChange', () => {
+      const onSortChange = vi.fn();
+      render(
+        <DataTable
+          caption="Invoices"
+          data={unsorted}
+          columns={sortableColumns}
+          getRowId={(i) => String(i.number)}
+          defaultSort={{ columnId: 'total', direction: 'asc' }}
+          onSortChange={onSortChange}
+        />,
+      );
+
+      expect(invoiceOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
+      expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('aria-sort', 'ascending');
+      expect(onSortChange).not.toHaveBeenCalled();
+    });
+
+    it('sorts from the keyboard with Tab then Enter', async () => {
+      const user = userEvent.setup();
+      render(
+        <DataTable
+          caption="Invoices"
+          data={unsorted}
+          columns={sortableColumns}
+          getRowId={(i) => String(i.number)}
+        />,
+      );
+
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Total' })).toHaveFocus();
+
+      await user.keyboard('{Enter}');
+      expect(invoiceOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
+      expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('aria-sort', 'ascending');
+    });
+
+    it('keeps the sort when data changes', async () => {
+      const user = userEvent.setup();
+      const table = (data: Invoice[]) => (
+        <DataTable
+          caption="Invoices"
+          data={data}
+          columns={sortableColumns}
+          getRowId={(i) => String(i.number)}
+        />
+      );
+      const { rerender } = render(table(unsorted));
+      await user.click(screen.getByRole('button', { name: 'Total' }));
+      rerender(table([...unsorted, { number: 1004, customer: 'Moa Ltd', total: 40, paid: false }]));
+      expect(invoiceOrder()).toEqual(['Kea Inc', 'Moa Ltd', 'Tui Ltd', 'Kiwi Co']);
+      expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('aria-sort', 'ascending');
+    });
   });
 });

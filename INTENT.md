@@ -79,7 +79,6 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
   move across cells. A `rowHeader` column option is "revisit next" for tables whose first column isn't the row's name.
 
 ## Still to decide (move each to Decisions)
-- Sorting: the click cycle, the default comparison when there's no `sortFn`, where missing values go, and the arrow for each direction
 - Styles for row hover, selected rows, checked/half-checked checkboxes, and the focus ring
 - Long text: wrap or truncate
 - Caption: visible, or screen-reader-only? If it's one choice for every table, no prop is needed; if each consumer chooses, it needs one.
@@ -102,6 +101,7 @@ Choices in `types.ts` with a known cost.
 - **No controlled `sort` or `selectedIds`.** Consumers can't reset the sort or clear the selection after a bulk action. First thing to revisit.
 
 - **A custom `sortFn` can't keep nulls last when descending.** It isn't told the direction and the table reverses it, so nulls placed last ascending come first descending. Passing the direction to `sortFn` would fix it at the cost of a more complex API.
+- Click cycle for a sortable header: ascending, then descending, then unsorted
 - **Mixed sort as text.** Booleans sort "false" before "true", a number against a string sorts as text, and objects are unsorted. Consumers use a `sortFn`.
 - **Accessors run on every comparison,** not once per row. Computing each row's value once before sorting would fix it for large data.
 
