@@ -5,9 +5,9 @@ export interface Column<T> {
   header: string;
   accessor?: keyof T | ((row: T) => unknown); // omit for cells that don't read a value
   cell?: (ctx: { row: T; value: unknown }) => ReactNode; // default: String(value)
-  sortable?: boolean | undefined; // default false
+  sortable?: boolean; // default false
   sortFn?: (a: T, b: T) => number; // ascending; table reverses for desc
-  align?: 'start' | 'center' | 'end' | undefined;
+  align?: 'start' | 'center' | 'end';
 }
 
 export type SortState = { columnId: string; direction: 'asc' | 'desc' };
@@ -23,8 +23,8 @@ export type DataTableProps<T> = SelectionProps<T> & {
   caption: string; // required: accessible name
   loading?: boolean;
   emptyState?: ReactNode; // default "No data"
-  defaultSort?: SortState; // initial sort only; the table owns it after that, to match your Decision.
-  onSelectionChange?: ((ids: ReadonlySet<string>) => void);
+  defaultSort?: SortState; // initial sort only; the table owns it after that
+  onSelectionChange?: (ids: ReadonlySet<string>) => void;
   onSortChange?: ((sort: SortState | null) => void);
   rowActions?: ((row: T) => ReactNode); // trailing "Actions" column, as in the design
 };
