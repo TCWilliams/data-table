@@ -12,6 +12,12 @@ function isMissing(value: unknown): boolean {
   );
 }
 
+/** Click cycle for a sortable header: ascending, then descending, then unsorted. */
+export function nextSort(current: SortState | null, columnId: string): SortState | null {
+  if (current?.columnId !== columnId) return { columnId, direction: 'asc' };
+  return current.direction === 'asc' ? { columnId, direction: 'desc' } : null;
+}
+
 function compareValues(a: unknown, b: unknown): number {
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();

@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { getCellValue } from './getCellValue';
-import { sortRows } from './sort';
+import { nextSort, sortRows } from './sort';
 import type { Column, DataTableProps, SortState } from './types';
 
 // Screen readers skip or misread a lone dash, so they get text instead.
@@ -14,6 +14,10 @@ const MISSING_VALUE = (
 const DEFAULT_EMPTY_STATE = 'No data';
 const LOADING_STATE = 'Loading…';
 
+const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const;
+const SORT_ICON = { asc: '↑', desc: '↓' } as const;
+
+
 /**
  * Renders a cell's content: the column's `cell` if given, otherwise `String(value)`.
  *
@@ -24,12 +28,6 @@ function renderCell<T>(row: T, column: Column<T>): ReactNode {
   const value = getCellValue(row, column);
   if (column.cell) return column.cell({ row, value });
   return value === null || value === undefined ? MISSING_VALUE : String(value);
-}
-
-/** Click cycle for a sortable header: ascending, then descending, then unsorted. */
-function nextSort(current: SortState | null, columnId: string): SortState | null {
-  if (current?.columnId !== columnId) return { columnId, direction: 'asc' };
-  return current.direction === 'asc' ? { columnId, direction: 'desc' } : null;
 }
 
 export function DataTable<T>({
@@ -72,14 +70,14 @@ export function DataTable<T>({
                 scope="col"
                 className="dt-header-cell"
                 data-align={column.align}
-                aria-sort={sorted && (sorted === 'asc' ? 'ascending' : 'descending')}
+                aria-sort={sorted && ARIA_SORT[sorted]}
               >
                 {column.sortable ? (
                   <button type="button" className="dt-sort-button" onClick={() => handleSort(column.id)}>
                     {column.header}
                     {sorted && (
                       <span className="dt-sort-icon" aria-hidden="true">
-                        {sorted === 'asc' ? '↑' : '↓'}
+                        {SORT_ICON[sorted]}
                       </span>
                     )}
                   </button>
