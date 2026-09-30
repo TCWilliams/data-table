@@ -66,6 +66,10 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 ## Decisions
 - **`defaultSort` sets the initial sort only**, like React's `defaultValue`; the table owns sort after that.
   It matches the sorted Figma frame and covers "newest first". It doesn't fire `onSortChange` on mount.
+- **Default sort order:** numbers numerically, Dates chronologically, everything else as browser local text. Other types need a `sortFn`.
+- **Missing values sort last in both directions** (`null`, `undefined`, `NaN`, invalid Dates), so gaps stay at the bottom. Missing values and ties keep their original order.
+- **A custom `sortFn` has full control, including nulls.** The table only reverses it for descending.
+
 - **`null`, `undefined` and `[]` data all show the same `emptyState`**, with headers still visible.
   One prop keeps the API small. A consumer who needs a "failed to load" message renders it outside the table.
 - **Missing cell values show "—" on screen and "No value" to screen readers**, because screen readers skip
@@ -76,8 +80,6 @@ I wrote this file and `src/DataTable/types.ts` myself. You implement in small sl
 
 ## Still to decide (move each to Decisions)
 - Sorting: the click cycle, the default comparison when there's no `sortFn`, where missing values go, and the arrow for each direction
-- Should a `sortFn` make a column sortable on its own? Yes removes a silent no-op; no keeps `sortable` as the single switch.
-- Do unsorted sortable columns show a hint?
 - Styles for row hover, selected rows, checked/half-checked checkboxes, and the focus ring
 - Long text: wrap or truncate
 - Caption: visible, or screen-reader-only? If it's one choice for every table, no prop is needed; if each consumer chooses, it needs one.
@@ -98,6 +100,11 @@ Choices in `types.ts` with a known cost.
   The cost: props built in pieces (for example with `Partial<DataTableProps<T>>`) must set `selectable` and `getRowLabel` together.
 - **The "Actions" header and "Loading…" text are fixed.** They can't be renamed or translated. Props can be added later without breaking anyone.
 - **No controlled `sort` or `selectedIds`.** Consumers can't reset the sort or clear the selection after a bulk action. First thing to revisit.
+
+- **A custom `sortFn` can't keep nulls last when descending.** It isn't told the direction and the table reverses it, so nulls placed last ascending come first descending. Passing the direction to `sortFn` would fix it at the cost of a more complex API.
+- **Mixed sort as text.** Booleans sort "false" before "true", a number against a string sorts as text, and objects are unsorted. Consumers use a `sortFn`.
+- **Accessors run on every comparison,** not once per row. Computing each row's value once before sorting would fix it for large data.
+
 
 ## Deliverables
 - Component and supporting files
