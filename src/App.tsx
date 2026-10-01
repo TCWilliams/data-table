@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { DataTable } from './DataTable/DataTable';
 import type { Column } from './DataTable/types';
 
+// Two row shapes. Same table component consumes both without changes.
+
 type Member = {
   id: string;
   name: string;
@@ -20,6 +22,7 @@ type Invoice = {
   due: Date;
 };
 
+// Identity is `id`. Aroha has a missing note. Chloe's note is long enough to truncate.
 const members: Member[] = [
   { id: 'm1', name: 'Aroha Ngata', role: 'Designer', email: 'aroha@kiwi.co', notes: null },
   { id: 'm2', name: 'Ben Carter', role: 'Engineer', email: 'ben@kiwi.co', notes: 'Prefers async updates' },
@@ -34,6 +37,7 @@ const members: Member[] = [
   { id: 'm4', name: 'Daniel Wei', role: 'Engineer', email: 'daniel@kiwi.co', notes: 'On parental leave until May' },
 ];
 
+// No `id` field: invoice number is unique, so that becomes the row id (as a string).
 const invoices: Invoice[] = [
   { number: 1042, customer: 'Kiwi Co', amount: 1250, status: 'paid', due: new Date('2026-09-01') },
   { number: 1043, customer: 'Tui Ltd', amount: 80.5, status: 'overdue', due: new Date('2026-08-12') },
@@ -41,6 +45,7 @@ const invoices: Invoice[] = [
   { number: 1045, customer: 'Moa Ltd', amount: 2100, status: 'pending', due: new Date('2026-10-30') },
 ];
 
+// Default rendering: field accessors. Name and role are sortable.
 const memberColumns: Column<Member>[] = [
   { id: 'name', header: 'Name', accessor: 'name', sortable: true },
   { id: 'role', header: 'Role', accessor: 'role', sortable: true },
@@ -48,11 +53,13 @@ const memberColumns: Column<Member>[] = [
   { id: 'notes', header: 'Notes', accessor: 'notes' },
 ];
 
+// Custom sort order: overdue first, then pending, then paid (not alphabetical).
 const statusRank: Record<InvoiceStatus, number> = { overdue: 0, pending: 1, paid: 2 };
 
 const currency = new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' });
 const shortDate = new Intl.DateTimeFormat('en-NZ', { dateStyle: 'medium' });
 
+// Custom cells (currency, status chip, date) and a custom status sortFn. Amounts right-aligned.
 const invoiceColumns: Column<Invoice>[] = [
   { id: 'number', header: 'Invoice', accessor: 'number', sortable: true },
   { id: 'customer', header: 'Customer', accessor: 'customer', sortable: true },
@@ -81,6 +88,7 @@ const invoiceColumns: Column<Invoice>[] = [
   },
 ];
 
+// Icon-only action: accessible name on the button
 function SendButton({ member }: { member: Member }) {
   return (
     <button type="button" className="send-button" aria-label={`Send message to ${member.name}`}>
@@ -99,6 +107,7 @@ export function App() {
   const dark = theme === 'dark';
 
   return (
+    // Dark mode: Tokens in DataTable/tokens.css pick it up.
     <div className="app" data-theme={dark ? 'dark' : undefined}>
       <header className="app-header">
         <h1>Data table</h1>
@@ -113,6 +122,7 @@ export function App() {
       </header>
 
       <div>
+        {/* Selection, named checkboxes, row actions. Caption is screen-reader only, h2 is visible. */}
         <h2>Team members</h2>
         <DataTable
           caption="Team members"
@@ -127,6 +137,7 @@ export function App() {
       </div>
 
       <div>
+        {/* No selection or actions. Amounts formatted; status has its own sort, newest due first. */}
         <h2>Invoices</h2>
         <DataTable
           caption="Invoices"
@@ -139,3 +150,4 @@ export function App() {
     </div>
   );
 }
+

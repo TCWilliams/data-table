@@ -19,6 +19,7 @@ const tasks: Task[] = [
 const ids = (rows: readonly Task[]) => rows.map((row) => row.id);
 
 describe('sortRows', () => {
+  // 2/10/33 would sort as text 10,2,33. Cherry vs apple would put capitals first without Collator.
   it.each([
     ['numbers', 'estimate', ['b', 'a', 'c']],
     ['dates', 'due', ['b', 'c', 'a']],
@@ -29,7 +30,7 @@ describe('sortRows', () => {
 
     expect(ids(sortRows(tasks, column, 'asc'))).toEqual(ascending);
     expect(ids(sortRows(tasks, column, 'desc'))).toEqual([...ascending].reverse());
-    expect(tasks).toEqual(original);
+    expect(tasks).toEqual(original); // copy, don't mutate the consumer's array
   });
 
   it('puts null, undefined and NaN last in both directions', () => {
@@ -44,6 +45,7 @@ describe('sortRows', () => {
     const column: Column<Task> = { id: 'estimate', header: 'Estimate', accessor: 'estimate' };
 
     expect(ids(sortRows(rows, column, 'asc'))).toEqual(['one', 'two', 'three', 'null', 'undefined', 'nan']);
+    // Missing stay last when descending too - only 3, 2, 1 flip.
     expect(ids(sortRows(rows, column, 'desc'))).toEqual(['three', 'two', 'one', 'null', 'undefined', 'nan']);
   });
 
@@ -57,6 +59,6 @@ describe('sortRows', () => {
     };
 
     expect(ids(sortRows(tasks, column, 'asc'))).toEqual(['b', 'c', 'a']);
-    expect(ids(sortRows(tasks, column, 'desc'))).toEqual(['a', 'c', 'b']);
+    expect(ids(sortRows(tasks, column, 'desc'))).toEqual(['a', 'c', 'b']); // table reverses sortFn
   });
 });

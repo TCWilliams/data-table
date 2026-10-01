@@ -12,6 +12,7 @@ type UseSortOptions<T> = Pick<DataTableProps<T>, 'data' | 'columns' | 'defaultSo
  */
 export function useSort<T>({ data, columns, defaultSort, onSortChange }: UseSortOptions<T>) {
   const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
+  // Match by column id, and only if sortable - a stale or invalid defaultSort is treated as unsorted.
   const sortColumn = columns.find((column) => column.sortable && column.id === sort?.columnId);
   const activeSort = sortColumn ? sort : null;
   const direction = activeSort?.direction;
@@ -19,9 +20,10 @@ export function useSort<T>({ data, columns, defaultSort, onSortChange }: UseSort
   const rows = useMemo(() => {
     const unsorted = data ?? [];
     return sortColumn && direction ? sortRows(unsorted, sortColumn, direction) : unsorted;
-  }, [data, sortColumn, direction]);
+  }, [data, sortColumn, direction]); // re-sort when data changes; sort state itself is kept
 
   function toggleSort(columnId: string) {
+    // Cycle uses activeSort (what is showing), not raw state - ignored columns start a fresh asc.
     const next = nextSort(activeSort, columnId);
     setSort(next);
     onSortChange?.(next);

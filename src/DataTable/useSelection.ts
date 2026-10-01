@@ -20,7 +20,7 @@ export function useSelection<T>({ data, getRowId, onSelectionChange }: UseSelect
 
   function commit(next: ReadonlySet<string>) {
     setSelected(next);
-    onSelectionChange?.(selectedInData(next));
+    onSelectionChange?.(selectedInData(next)); // clicks only - a data change does not fire this
   }
 
   function isSelected(id: string) {
@@ -35,6 +35,7 @@ export function useSelection<T>({ data, getRowId, onSelectionChange }: UseSelect
   }
 
   function toggleAll() {
+    // Clear wipes remembered ids too. Select-all adds current ids without dropping stored ones.
     commit(allSelected ? new Set() : new Set([...selected, ...rowIds]));
   }
 

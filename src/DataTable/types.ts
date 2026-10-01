@@ -1,5 +1,13 @@
+/*
+ * Public API for DataTable. T is the row type and is inferred from `data`.
+ *
+ * Consumers decide columns and cell rendering. Identity is `getRowId` (a unique
+ * string per row, not array index). Sort and selection are uncontrolled after mount.
+ */
+
 import type { ReactNode } from 'react';
 
+/** One column. `id` is the column's identity (sort, keys); it is not the row id. */
 export interface Column<T> {
   id: string;
   header: string;
@@ -12,9 +20,10 @@ export interface Column<T> {
 
 export type SortState = { columnId: string; direction: 'asc' | 'desc' };
 
+/** `getRowLabel` is required only when the table is selectable (names each checkbox). */
 type SelectionProps<T> =
   | { selectable?: false; getRowLabel?: (row: T) => string }
-  | { selectable: true; getRowLabel: (row: T) => string }; // required: names each row checkbox
+  | { selectable: true; getRowLabel: (row: T) => string };
 
 export type DataTableProps<T> = SelectionProps<T> & {
   data: readonly T[] | null | undefined;
@@ -23,7 +32,7 @@ export type DataTableProps<T> = SelectionProps<T> & {
   caption: string; // required: accessible name
   loading?: boolean;
   emptyState?: ReactNode; // default "No data"
-  defaultSort?: SortState; // initial sort only; the table owns it after that
+  defaultSort?: SortState; // initial sort only - the table owns it after that
   onSelectionChange?: (ids: ReadonlySet<string>) => void;
   onSortChange?: ((sort: SortState | null) => void);
   rowActions?: ((row: T) => ReactNode); // trailing "Actions" column, as in the design

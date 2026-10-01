@@ -77,6 +77,7 @@ describe('DataTable', () => {
   });
 
   it('passes row and value to a custom cell', () => {
+    // Spy: called with { row, value }; returns text that uses both so we can assert they were passed.
     const cell = vi.fn(({ row, value }: { row: User; value: unknown }) => `${String(value)} <${row.email}>`);
     render(
       <DataTable
@@ -209,6 +210,7 @@ describe('DataTable', () => {
       { id: 'customer', header: 'Customer', accessor: 'customer' },
       { id: 'total', header: 'Total', accessor: 'total', sortable: true },
     ];
+    // Tui, Kiwi, Kea - so original, asc (0, 80.5, 250) and desc (250, 80.5, 0) are all different.
     const unsorted = [invoices[1]!, invoices[0]!, invoices[2]!];
     const invoiceOrder = () => bodyRows().map((row) => cellTexts(row)[0]);
 
@@ -227,6 +229,7 @@ describe('DataTable', () => {
       const totalHeader = screen.getByRole('columnheader', { name: 'Total' });
       const sortButton = within(totalHeader).getByRole('button', { name: 'Total' });
 
+      // Click 1: asc. Click 2: desc. Click 3: back to the input order. aria-sort and callback clear.
       await user.click(sortButton);
       expect(invoiceOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
       expect(totalHeader).toHaveAttribute('aria-sort', 'ascending');
@@ -243,10 +246,12 @@ describe('DataTable', () => {
       expect(onSortChange).toHaveBeenLastCalledWith(null);
 
       expect(onSortChange).toHaveBeenCalledTimes(3);
+      // aria-sort only on the active column.
       expect(screen.getByRole('columnheader', { name: 'Customer' })).not.toHaveAttribute('aria-sort');
     });
 
     it('starts from defaultSort without calling onSortChange', () => {
+      // Like React defaultValue: initial sort only; no callback on mount.
       const onSortChange = vi.fn();
       render(
         <DataTable
@@ -278,6 +283,7 @@ describe('DataTable', () => {
       await user.tab();
       expect(screen.getByRole('button', { name: 'Total' })).toHaveFocus();
 
+      // Native <button> inside the header - no custom keyboard handler.
       await user.keyboard('{Enter}');
       expect(invoiceOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
       expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('aria-sort', 'ascending');
@@ -295,6 +301,7 @@ describe('DataTable', () => {
       );
       const { rerender } = render(table(unsorted));
       await user.click(screen.getByRole('button', { name: 'Total' }));
+      // Moa (40) belongs between Kea (0) and Tui (80.5). Failures: unsorted append, or sort reset.
       rerender(table([...unsorted, { number: 1004, customer: 'Moa Ltd', total: 40, paid: false }]));
       expect(invoiceOrder()).toEqual(['Kea Inc', 'Moa Ltd', 'Tui Ltd', 'Kiwi Co']);
       expect(screen.getByRole('columnheader', { name: 'Total' })).toHaveAttribute('aria-sort', 'ascending');
@@ -329,6 +336,7 @@ describe('DataTable', () => {
       await user.click(rowCheckbox(1002));
       expect(rowCheckbox(1002)).toBeChecked();
       expect(rowCheckbox(1002).closest('tr')).toHaveAttribute('data-selected');
+      // Select-all is checked only when every row is selected (no half-checked state).
       expect(selectAll()).not.toBeChecked();
       expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(['1002']));
 
@@ -351,6 +359,7 @@ describe('DataTable', () => {
       await user.click(screen.getByRole('button', { name: 'Total' }));
 
       expect(customerOrder()).toEqual(['Kea Inc', 'Tui Ltd', 'Kiwi Co']);
+      // 1001 is Kiwi Co. If selection followed row index, the first row (Kea) would be ticked instead.
       const selectedRow = rowCheckbox(1001).closest('tr')!;
       expect(rowCheckbox(1001)).toBeChecked();
       expect(within(selectedRow).getByRole('rowheader', { name: 'Kiwi Co' })).toBeInTheDocument();
@@ -368,6 +377,7 @@ describe('DataTable', () => {
       rerender(table(invoices.filter((i) => i.number !== 1002), onSelectionChange));
       await user.click(rowCheckbox(1003));
 
+      // Next report is filtered against current data - 1002 is gone even if still stored.
       expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(['1001', '1003']));
     });
   });
